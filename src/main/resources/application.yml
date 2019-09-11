@@ -1,0 +1,17 @@
+spring:
+  datasource:
+    url: jdbc:mysql://127.0.0.1:3306/watcher?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&useCursorFetch=true&useServerPrepStmts=false&rewriteBatchedStatements=true&useAffectedRows=true&allowMultiQueries=true
+    username: root
+    password: root
+    driver-class-name: com.mysql.jdbc.Driver
+    type: com.alibaba.druid.pool.DruidDataSource
+    min-idle: 5
+  http:
+    encoding:
+      charset: UTF-8
+      force: true
+      enabled: true
+
+third:
+  interface:
+    permission: http://100.98.112.42:8080/foundationservice/auth/operation/getbyparams

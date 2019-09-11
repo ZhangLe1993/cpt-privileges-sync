@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: jdbc:mysql://10.81.44.187:3306/watcher?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&useCursorFetch=true&useServerPrepStmts=false&rewriteBatchedStatements=true&useAffectedRows=true&allowMultiQueries=true
+    username: root
+    password: root

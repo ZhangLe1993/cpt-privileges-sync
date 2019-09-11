@@ -1,0 +1,5 @@
+spring:
+  datasource:
+    url: jdbc:mysql://rm-bp1pw59t9hspt57z5.mysql.rds.aliyuncs.com:3306/watcher?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&useCursorFetch=true&useServerPrepStmts=false&rewriteBatchedStatements=true&useAffectedRows=true&allowMultiQueries=true
+    username: watcher
+    password: L00easy_rpt_8745
