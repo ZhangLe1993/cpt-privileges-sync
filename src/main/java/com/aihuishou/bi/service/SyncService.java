@@ -68,12 +68,29 @@ public class SyncService {
     }
 
     public List<User> all() throws SQLException {
-        String sql = "SELECT observer_account_id as obId, observer_account_user_name AS name, observer_account_mobile_txt AS mobile,observer_account_email_txt AS email,observer_account_employee_no AS employeeNo from dim_observer_account where observer_account_id <> -1";
+        String sql = "SELECT observer_account_id as obId, observer_account_user_name AS name, observer_account_mobile_txt AS mobile,observer_account_email_txt AS email,observer_account_employee_no AS employeeNo from dim_observer_account where observer_account_is_active_flag = 1 and observer_account_id <> -1";
         return new QueryRunner(dataSource).query(sql, new BeanListHandler<>(User.class));
     }
 
     public void truncate() throws SQLException {
-        String sql = "truncate table user_operation;";
+        String sql = "truncate table user_operation_min;";
+        new QueryRunner(dataSource).update(sql);
+    }
+
+
+    public void recreate() throws SQLException {
+        String sql = "DROP TABLE IF EXISTS `user_operation_min`;";
+        new QueryRunner(dataSource).update(sql);
+        sql = "CREATE TABLE `user_operation_min` (\n" +
+                "  `id` int(11) NOT NULL AUTO_INCREMENT,\n" +
+                "  `observer_id` int(11) NOT NULL,\n" +
+                "  `access_id` int(11) NOT NULL,\n" +
+                "  `access_name` varchar(32) NOT NULL,\n" +
+                "  `active` tinyint(4) NOT NULL DEFAULT '1',\n" +
+                "  PRIMARY KEY (`id`),\n" +
+                "  KEY `index_observer_id` (`observer_id`),\n" +
+                "  KEY `index_access_name` (`access_name`)\n" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
         new QueryRunner(dataSource).update(sql);
     }
 
@@ -105,7 +122,7 @@ public class SyncService {
 
 
     private void batch(List<UserOperation> list) {
-        String sql = "INSERT INTO user_operation(observer_id, access_id, access_name) VALUES (?, ?, ?) ";
+        String sql = "INSERT INTO user_operation_min(observer_id, access_id, access_name) VALUES (?, ?, ?) ";
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         try {

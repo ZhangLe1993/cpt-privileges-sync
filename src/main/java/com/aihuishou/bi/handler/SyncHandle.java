@@ -30,6 +30,7 @@ public class SyncHandle implements CommandLineRunner {
         if(users == null || users.size() == 0) {
             return;
         }
+        //syncService.truncate();
         syncService.truncate();
         List<List<User>> batch = Lists.partition(users, 200);
         //并发处理
