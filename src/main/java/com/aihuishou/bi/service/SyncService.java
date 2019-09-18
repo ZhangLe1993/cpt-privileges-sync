@@ -10,9 +10,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
+import org.apache.commons.dbutils.handlers.ColumnListHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import javax.annotation.Resource;
@@ -23,7 +23,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Service
@@ -34,7 +33,7 @@ public class SyncService {
     @Resource
     private DataSource dataSource;
 
-    public List<UserOperation> syncUserPermission(String obId) {
+    public List<UserOperation> syncUserPermission(List<String> container, String obId) {
         Map<String, Object> params = ImmutableMap.of("data", ImmutableMap.of("observerId", obId));
         ResponseEntity<String> content = null;
         try {
@@ -55,7 +54,11 @@ public class SyncService {
         if (jsonArray == null || jsonArray.size() == 0) {
             return new ArrayList<>();
         }
-        List<UserOperation> operations = jsonArray.stream().map(p -> {
+        List<UserOperation> operations = jsonArray.stream().filter(f -> {
+            JSONObject json = (JSONObject) f;
+            String accessName = json.getString("name");
+            return container.contains(accessName);
+        }).map(p -> {
             JSONObject json = (JSONObject) p;
             UserOperation userOperation = new UserOperation();
             userOperation.setObserverId(Integer.parseInt(obId));
@@ -157,6 +160,12 @@ public class SyncService {
                 }
             }
         }
+    }
+
+
+    public List<String> container() throws SQLException {
+        String sql = "select distinct target_operation from operation_mapping;";
+        return new QueryRunner(dataSource).query(sql, new ColumnListHandler<String>("target_operation"));
     }
 
 

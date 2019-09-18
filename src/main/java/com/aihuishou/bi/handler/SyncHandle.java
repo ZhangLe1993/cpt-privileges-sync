@@ -25,12 +25,27 @@ public class SyncHandle implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        List<String> container = syncService.container();
+        //单个人
+        //single(container, "130681");
+
+        //全量
+        batch(container);
+    }
+
+
+    public void single(List<String> container, String obId) throws SQLException {
+        List<UserOperation> temp = syncService.syncUserPermission(container, obId);
+        syncService.save(temp);
+    }
+
+
+    public void batch(List<String> container) throws SQLException {
         long startTime = System.currentTimeMillis();
         List<User> users = syncService.all();
         if(users == null || users.size() == 0) {
             return;
         }
-        //syncService.truncate();
         syncService.truncate();
         List<List<User>> batch = Lists.partition(users, 200);
         //并发处理
@@ -41,7 +56,7 @@ public class SyncHandle implements CommandLineRunner {
                 if(obId == null || "".equalsIgnoreCase(obId.toString())) {
                     continue;
                 }
-                List<UserOperation> temp = syncService.syncUserPermission(obId.toString());
+                List<UserOperation> temp = syncService.syncUserPermission(container, obId.toString());
                 userOperations.addAll(temp);
                 //logger.info("加入员工 obId:【{}】,姓名:【{}】", obId, user.getName());
             }
@@ -50,7 +65,7 @@ public class SyncHandle implements CommandLineRunner {
                 logger.info("线程批次存入数据库: 当前线程：{}", Thread.currentThread());
             } catch (SQLException e) {
                 e.printStackTrace();
-            }finally {
+            } finally {
                 userOperations = null;
             }
         });
