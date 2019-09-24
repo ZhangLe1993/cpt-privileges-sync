@@ -27,7 +27,7 @@ public class SyncHandle implements CommandLineRunner {
     public void run(String... args) throws Exception {
         List<String> container = syncService.container();
         //单个人
-        //single(container, "130681");
+        //single(container, "10745");
 
         //全量
         batch(container);
@@ -46,9 +46,10 @@ public class SyncHandle implements CommandLineRunner {
         if(users == null || users.size() == 0) {
             return;
         }
-        syncService.truncate();
+        //复制表结构
+        syncService.like();
         List<List<User>> batch = Lists.partition(users, 200);
-        //并发处理
+        //并发处理 数据存入新表
         batch.parallelStream().forEach(list -> {
             List<UserOperation> userOperations = Collections.synchronizedList(new ArrayList<>());
             for(User user : list) {
@@ -69,7 +70,14 @@ public class SyncHandle implements CommandLineRunner {
                 userOperations = null;
             }
         });
+        //数据写完之后，进行临时表的切换
+        //一个事物。
+        //1、删除旧表
+        //2、临时表重命名为旧表的名字
+        syncService.transactional();
         long endTime = System.currentTimeMillis();
         logger.info("耗时：{} ms", endTime - startTime);
     }
+
+
 }

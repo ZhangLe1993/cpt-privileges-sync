@@ -14,6 +14,7 @@ import org.apache.commons.dbutils.handlers.ColumnListHandler;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
 import javax.sql.DataSource;
@@ -80,20 +81,34 @@ public class SyncService {
         new QueryRunner(dataSource).update(sql);
     }
 
+    @Transactional
+    public void transactional() throws SQLException {
+        drop();
+        reName();
+    }
 
-    public void recreate() throws SQLException {
-        String sql = "DROP TABLE IF EXISTS `user_operation_min`;";
+    /**
+     * 复制表结构
+     */
+    public void like() throws SQLException {
+        String sql = "CREATE TABLE user_operation_min_temp LIKE user_operation_min;";
         new QueryRunner(dataSource).update(sql);
-        sql = "CREATE TABLE `user_operation_min` (\n" +
-                "  `id` int(11) NOT NULL AUTO_INCREMENT,\n" +
-                "  `observer_id` int(11) NOT NULL,\n" +
-                "  `access_id` int(11) NOT NULL,\n" +
-                "  `access_name` varchar(32) NOT NULL,\n" +
-                "  `active` tinyint(4) NOT NULL DEFAULT '1',\n" +
-                "  PRIMARY KEY (`id`),\n" +
-                "  KEY `index_observer_id` (`observer_id`),\n" +
-                "  KEY `index_access_name` (`access_name`)\n" +
-                ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+    }
+
+    /**
+     * 删掉旧表
+     * @throws SQLException
+     */
+    public void drop() throws SQLException {
+        String sql = "drop table user_operation_min;";
+        new QueryRunner(dataSource).update(sql);
+    }
+
+    /**
+     * 新表重命名
+     */
+    public void reName() throws SQLException {
+        String sql = "ALTER TABLE user_operation_min_temp RENAME TO  user_operation_min;";
         new QueryRunner(dataSource).update(sql);
     }
 
@@ -102,17 +117,13 @@ public class SyncService {
             return;
         }
         pre(list);
-        /*int size = list.size();
-        Object[][] params = new Object[size][3];
-        int i;
-        for (i = 0; i < size; i++) {
-            UserOperation obj = list.get(i);
-            params[i] = new Object[]{obj.getObserverId(), obj.getAccessId(), obj.getAccessName()};
-        }
-        String sql = "insert into user_operation(observer_id, access_id, access_name) values (?, ?, ?);";
-        new QueryRunner(dataSource).batch(sql, params);*/
     }
 
+    /**
+     * 预处理占位符问题
+     * @param list
+     * @throws SQLException
+     */
     private void pre(List<UserOperation> list) throws SQLException {
         // 21845 * 3 = 65535  占位符不可以超过这个数
         if (list.size() > 21845) {
@@ -123,9 +134,12 @@ public class SyncService {
         batch(list);
     }
 
-
+    /**
+     * 数据存入新的临时表
+     * @param list
+     */
     private void batch(List<UserOperation> list) {
-        String sql = "INSERT INTO user_operation_min(observer_id, access_id, access_name) VALUES (?, ?, ?) ";
+        String sql = "INSERT INTO user_operation_min_temp(observer_id, access_id, access_name) VALUES (?, ?, ?) ";
         Connection connection = null;
         PreparedStatement preparedStatement = null;
         try {
@@ -162,11 +176,30 @@ public class SyncService {
         }
     }
 
-
+    /**
+     * 本地数据库有的权限
+     * @return
+     * @throws SQLException
+     */
     public List<String> container() throws SQLException {
         String sql = "select distinct target_operation from operation_mapping;";
         return new QueryRunner(dataSource).query(sql, new ColumnListHandler<String>("target_operation"));
     }
 
 
+    public void recreate() throws SQLException {
+        String sql = "DROP TABLE IF EXISTS `user_operation_min`;";
+        new QueryRunner(dataSource).update(sql);
+        sql = "CREATE TABLE `user_operation_min` (\n" +
+                "  `id` int(11) NOT NULL AUTO_INCREMENT,\n" +
+                "  `observer_id` int(11) NOT NULL,\n" +
+                "  `access_id` int(11) NOT NULL,\n" +
+                "  `access_name` varchar(32) NOT NULL,\n" +
+                "  `active` tinyint(4) NOT NULL DEFAULT '1',\n" +
+                "  PRIMARY KEY (`id`),\n" +
+                "  KEY `index_observer_id` (`observer_id`),\n" +
+                "  KEY `index_access_name` (`access_name`)\n" +
+                ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
+        new QueryRunner(dataSource).update(sql);
+    }
 }
