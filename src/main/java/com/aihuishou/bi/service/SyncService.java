@@ -35,7 +35,7 @@ public class SyncService {
     private DataSource dataSource;
 
     public List<UserOperation> syncUserPermission(List<String> container, String obId) {
-        Map<String, Object> params = ImmutableMap.of("data", ImmutableMap.of("observerId", obId));
+        Map<String, Object> params = ImmutableMap.of("observerId", obId);
         ResponseEntity<String> content = null;
         try {
             content = new RetryTemplate() {
