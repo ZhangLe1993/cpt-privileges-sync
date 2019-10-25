@@ -14,6 +14,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 @Component
 public class SyncHandle implements CommandLineRunner {
@@ -25,22 +26,25 @@ public class SyncHandle implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        List<String> container = syncService.container();
+        Set<String> container = syncService.syncOperationList();
+        //List<String> container = syncService.container();
         //单个人
         //single(container, "10745");
-
         //全量
         batch(container);
+
+        //清除缓存
+        syncService.clearCache();
     }
 
 
-    public void single(List<String> container, String obId) throws SQLException {
+    public void single(Set<String> container, String obId) throws SQLException {
         List<UserOperation> temp = syncService.syncUserPermission(container, obId);
         syncService.save(temp);
     }
 
 
-    public void batch(List<String> container) throws SQLException {
+    public void batch(Set<String> container) throws SQLException {
         long startTime = System.currentTimeMillis();
         List<User> users = syncService.all();
         if(users == null || users.size() == 0) {

@@ -6,11 +6,20 @@ spring:
     driver-class-name: com.mysql.jdbc.Driver
     type: com.alibaba.druid.pool.DruidDataSource
     min-idle: 5
+  redis:
+      host: 10.81.44.187
+      password: 123456
+      database: 14
   http:
     encoding:
       charset: UTF-8
       force: true
       enabled: true
+basic:
+  mongodb:
+    host: 10.168.187.122
+    port: 27017
+    database: Watcher
 
 third:
   interface:

@@ -1,5 +1,6 @@
 package com.aihuishou.bi.service;
 
+import com.aihuishou.bi.entity.OperationMapping;
 import com.aihuishou.bi.entity.User;
 import com.aihuishou.bi.entity.UserOperation;
 import com.aihuishou.bi.utils.RestTemplateUtils;
@@ -11,9 +12,14 @@ import com.google.common.collect.Lists;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.handlers.BeanListHandler;
 import org.apache.commons.dbutils.handlers.ColumnListHandler;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.annotation.Resource;
@@ -24,6 +30,7 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -31,10 +38,18 @@ public class SyncService {
 
     @Value("${third.interface.permission}")
     private String permissionInterface;
-    @Resource
+
+    @Autowired
     private DataSource dataSource;
 
-    public List<UserOperation> syncUserPermission(List<String> container, String obId) {
+    @Autowired
+    @Qualifier(value = "basicMongoTemplate")
+    private MongoTemplate mongoTemplate;
+
+    @Autowired
+    private CacheService cacheService;
+
+    public List<UserOperation> syncUserPermission(Set<String> container, String obId) {
         Map<String, Object> params = ImmutableMap.of("observerId", obId);
         ResponseEntity<String> content = null;
         try {
@@ -81,7 +96,7 @@ public class SyncService {
         new QueryRunner(dataSource).update(sql);
     }
 
-    @Transactional
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void transactional() throws SQLException {
         drop();
         reName();
@@ -201,5 +216,33 @@ public class SyncService {
                 "  KEY `index_access_name` (`access_name`)\n" +
                 ") ENGINE=InnoDB DEFAULT CHARSET=utf8;";
         new QueryRunner(dataSource).update(sql);
+    }
+
+    public Set<String> syncOperationList() throws SQLException {
+        List<OperationMapping> list = mongoTemplate.find(new Query(), OperationMapping.class, "userPermissionOperationMapping");
+        new QueryRunner(dataSource).update("truncate table operation_mapping;");
+        String sql = "INSERT INTO `operation_mapping`(source_operation, target_operation) VALUES(?, ?)";
+        Object[][] params = new Object[list.size()][2];
+        for(int i = 0; i < list.size(); i++) {
+            String operation  = list.get(i).getOperation();
+            String accessName = list.get(i).getAccessName();
+            params[i] = new Object[]{operation, accessName};
+        }
+        new QueryRunner(dataSource).batch(sql, params);
+        return list.stream().map(OperationMapping::getAccessName).collect(Collectors.toSet());
+    }
+
+
+
+    public void clearCache() {
+        cacheService.removeLNA();
+        cacheService.removeLUA();
+        cacheService.removeMMA();
+        cacheService.removePM();
+        cacheService.removePMM();
+        cacheService.removePMMS();
+        cacheService.removeRM();
+        cacheService.removeCU();
+        cacheService.removeLUAM();
     }
 }
