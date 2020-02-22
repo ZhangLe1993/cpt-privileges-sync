@@ -7,7 +7,7 @@ spring:
     type: com.alibaba.druid.pool.DruidDataSource
     min-idle: 5
   redis:
-      host: 10.81.44.187
+      host: 127.0.0.1
       password: 123456
       database: 14
   http:
@@ -17,10 +17,10 @@ spring:
       enabled: true
 basic:
   mongodb:
-    host: 10.168.187.122
+    host: 127.0.0.1
     port: 27017
     database: Watcher
 
 third:
   interface:
-    permission: http://100.98.112.42:8080/foundationservice/auth/operation/getbyparams
+    permission: http://127.0.0.1:8080/foundationservice/auth/operation/getbyparams

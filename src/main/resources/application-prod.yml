@@ -1,9 +1,9 @@
 spring:
   datasource:
-    url: jdbc:mysql://rm-bp1pw59t9hspt57z5.mysql.rds.aliyuncs.com:3306/watcher?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&useCursorFetch=true&useServerPrepStmts=false&rewriteBatchedStatements=true&useAffectedRows=true&allowMultiQueries=true
+    url: jdbc:mysql://127.0.0.1:3306/watcher?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&zeroDateTimeBehavior=convertToNull&useCursorFetch=true&useServerPrepStmts=false&rewriteBatchedStatements=true&useAffectedRows=true&allowMultiQueries=true
     username: watcher
     password: qROMIraFQzU3MLp6o2ql
   redis:
-    host: r-bp1df75eafff5994.redis.rds.aliyuncs.com
+    host: 127.0.0.1
     password: L00easym9xfbvac25481236
     database: 14
